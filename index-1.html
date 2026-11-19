@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#126b45">
+<title>BachiBot | Prototipo académico</title>
+<style>
+:root{--green:#126b45;--green2:#0c5637;--pale:#eaf4ee;--ink:#173328;--muted:#61736a;--line:#dce8e0}
+*{box-sizing:border-box}
+body{margin:0;background:#f2f6f3;color:var(--ink);font-family:Arial,Helvetica,sans-serif}
+header{background:var(--green);color:#fff;padding:18px 20px;box-shadow:0 2px 10px #1232}
+.top{max-width:900px;margin:auto;display:flex;align-items:center;gap:13px}
+.logo{width:48px;height:48px;border:2px solid #d7eee0;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:17px;letter-spacing:-1px}
+.brand{font-weight:700;letter-spacing:.3px}.sub{font-size:12px;color:#d9eee2;margin-top:4px}
+main{max-width:900px;margin:28px auto;padding:0 16px}
+.intro{margin-bottom:18px}.intro h1{font-size:26px;margin:0 0 8px;color:var(--green2)}.intro p{margin:0;color:var(--muted);line-height:1.5}
+.notice{background:#fff8df;border:1px solid #ead99a;color:#66551b;border-radius:10px;padding:11px 13px;font-size:13px;line-height:1.45;margin:16px 0}
+.panel{background:white;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 8px 28px #163c2610}
+.panel-head{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.boticon{background:var(--pale);color:var(--green);width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:21px}
+.status{margin-left:auto;font-size:12px;color:#18794e}.status:before{content:"";display:inline-block;width:7px;height:7px;background:#20a464;border-radius:50%;margin-right:6px}
+.chat{height:390px;overflow-y:auto;padding:18px;background:#fbfdfb;display:flex;flex-direction:column;gap:12px}
+.msg{max-width:85%;padding:11px 13px;border-radius:13px;line-height:1.45;font-size:14px;white-space:pre-wrap}
+.bot{align-self:flex-start;background:#edf5ef;border:1px solid #e0ece3;border-bottom-left-radius:4px}
+.user{align-self:flex-end;background:#dcefe3;border:1px solid #cbe4d4;border-bottom-right-radius:4px}
+.sender{font-size:11px;font-weight:700;color:#527061;margin-bottom:4px}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.choice{border:1px solid #b8d5c2;background:white;color:var(--green2);border-radius:20px;padding:8px 12px;cursor:pointer;font-size:13px}
+.choice:hover{background:#eaf4ee}
+.entry{display:flex;gap:8px;padding:13px;border-top:1px solid var(--line);background:#fff}
+.entry input{flex:1;min-width:0;border:1px solid #cbd9cf;border-radius:10px;padding:12px;font-size:14px;outline-color:var(--green)}
+.entry button,.restart{border:0;border-radius:10px;background:var(--green);color:white;padding:0 18px;font-weight:700;cursor:pointer}
+.entry button:hover,.restart:hover{background:var(--green2)}
+.bottom{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 16px;color:var(--muted);font-size:11px}
+.restart{padding:8px 12px;font-size:12px}
+footer{text-align:center;color:#728178;font-size:12px;padding:22px 10px}
+@media(max-width:600px){main{margin:18px auto}.intro h1{font-size:22px}.chat{height:430px}.msg{max-width:94%}.bottom{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body>
+<header><div class="top">
+  <div class="logo" aria-label="Identificador académico">CB</div>
+  <div><div class="brand">COLEGIO DE BACHILLERES</div><div class="sub">BachiBot · Asistente de orientación estudiantil</div></div>
+</div></header>
+<main>
+  <section class="intro">
+    <h1>Centro de ayuda para correo institucional</h1>
+    <p>Cuéntale a BachiBot qué problema tienes. El asistente te guiará por una demostración del proceso de recuperación.</p>
+  </section>
+  <div class="notice"><strong>Prototipo académico:</strong> este sitio no es un servicio oficial del Colegio de Bachilleres. No escribas tu matrícula real, correo personal real ni contraseñas. Los datos y el código son ficticios; no se envían correos ni se modifican cuentas.</div>
+  <section class="panel" aria-label="Chat con BachiBot">
+    <div class="panel-head"><div class="boticon">🤖</div><div><strong>BachiBot</strong><div style="font-size:12px;color:#61736a;margin-top:3px">Asistente virtual de demostración</div></div><div class="status">Disponible</div></div>
+    <div class="chat" id="chat" aria-live="polite"></div>
+    <form class="entry" id="form"><input id="message" autocomplete="off" placeholder="Escribe tu mensaje..." aria-label="Escribe tu mensaje"><button type="submit">Enviar</button></form>
+    <div class="bottom"><span>Demostración local · No se recopilan ni guardan datos</span><button class="restart" id="restart" type="button">Reiniciar chat</button></div>
+  </section>
+</main>
+<footer>Proyecto escolar · BachiBot · Identidad gráfica de demostración (no oficial)</footer>
+<script>
+const chat=document.getElementById('chat');
+const form=document.getElementById('form');
+const input=document.getElementById('message');
+let step=0;
+function bubble(who,text,choices=[]){
+  const el=document.createElement('div'); el.className='msg '+(who==='Tú'?'user':'bot');
+  const sender=document.createElement('div');sender.className='sender';sender.textContent=who;
+  const body=document.createElement('div');body.textContent=text;el.append(sender,body);
+  if(choices.length){const wrap=document.createElement('div');wrap.className='actions';choices.forEach(c=>{const b=document.createElement('button');b.type='button';b.className='choice';b.textContent=c;b.onclick=()=>{input.value=c;form.requestSubmit()};wrap.append(b)});el.append(wrap)}
+  chat.append(el);chat.scrollTop=chat.scrollHeight;
+}
+function start(){chat.innerHTML='';step=0;bubble('BachiBot','¡Hola, estudiante de Colegio de Bachilleres! 👋 Soy BachiBot. ¿En qué puedo ayudarte?', ['Recuperar contraseña','No puedo ingresar','Otra consulta']);}
+function reply(raw){
+ const msg=raw.trim(); if(!msg)return;
+ bubble('Tú',msg);
+ let answer='';
+ if(step===0){
+   if(/recuper|contrase|ingresar|correo|cuenta|ayuda/i.test(msg)){
+     step=1;answer='Con gusto te orientaré. Para esta demostración escribe una matrícula FICTICIA (por ejemplo: DEMO123). No uses tu matrícula real.';
+   } else {answer='Puedo orientarte sobre recuperación de contraseña o problemas para ingresar. Escribe “recuperar contraseña” para comenzar.';}
+ } else if(step===1){
+   if(msg.length<4){answer='La matrícula de ejemplo debe tener al menos 4 caracteres. Prueba con DEMO123.';}
+   else {step=2;answer='Gracias. Ahora escribe un correo personal FICTICIO (por ejemplo: estudiante@ejemplo.com). No uses tu correo verdadero.';}
+ } else if(step===2){
+   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(msg)){answer='Ese formato no parece un correo válido. Prueba con estudiante@ejemplo.com (solo de ejemplo).';}
+   else {step=3;answer='En un sistema real, el servicio autorizado enviaría un código temporal al correo verificado. En este prototipo no se envía ningún mensaje. Tu código de demostración es: 123456. Escríbelo para continuar.';}
+ } else if(step===3){
+   if(msg==='123456'){step=4;answer='¡Verificación de demostración correcta! ✅ Ahora escribe una contraseña NUEVA FICTICIA para mostrar el último paso. No uses ninguna contraseña que utilices en la vida real.';}
+   else {answer='El código no coincide. Para esta demostración escribe 123456.';}
+ } else if(step===4){
+   if(msg.length<8){answer='Para el ejemplo, escribe una contraseña ficticia de al menos 8 caracteres.';}
+   else {step=5;answer='¡Proceso de demostración terminado! 🎉 La contraseña ficticia se aceptó en esta pantalla, pero no se guardó ni cambió ninguna cuenta. Para recuperar una cuenta real, utiliza el procedimiento oficial de tu plantel.';}
+ } else {answer='La demostración ya terminó. Puedes seleccionar “Reiniciar chat” para volver a empezar.';}
+ bubble('BachiBot',answer);
+}
+form.addEventListener('submit',e=>{e.preventDefault();const v=input.value;input.value='';reply(v)});
+document.getElementById('restart').addEventListener('click',start);
+start();
+</script>
+</body>
+</html>
